@@ -72,7 +72,11 @@ export default function Checkout(prop) {
     let orderPost = orderData;
 
     axios
-      .post("https://game-accessories-api.onrender.com/api/v1/Carts", cartPost)
+      .post("https://game-accessories-api.onrender.com/api/v1/Carts", cartPost, {
+        headers: {
+          Authorization: `Bearer ${token} `,
+        },
+      })
       .then((response) => {
         paymentPost.cartId = response.data.id;
         paymentPost.totalPrice = response.data.totalPrice;
