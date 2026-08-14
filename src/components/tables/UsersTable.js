@@ -1,144 +1,104 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Box from "@mui/material/Box";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
 import axios from "axios";
+import AdminTableToolbar from "./AdminTableToolbar";
+import { API_BASE, authHeaders } from "../../api";
+import { useStoreSettings } from "../../context/StoreSettings";
 
 export default function UsersTable(prop) {
-  const { setSnackBarMessage, setOpenSuccessSnackBar, setOpenErrorSnackBar } =
-    prop;
+  const { setSnackBarMessage, setOpenSuccessSnackBar, setOpenErrorSnackBar } = prop;
+  const { t } = useStoreSettings();
   const [rows, setRows] = useState([]);
-  const token = localStorage.getItem("token");
+  const [query, setQuery] = useState("");
 
-  const deleteUser = (userId) => {
-    let isSuccess = false;
+  useEffect(() => {
+    let cancelled = false;
     axios
-      .delete(
-        `https://game-accessories-api.onrender.com/api/v1/Users/${userId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
+      .get(`${API_BASE}/Users`, { headers: authHeaders() })
       .then((response) => {
+        if (cancelled) return;
+        setRows(response.data.map((user) => ({ ...user, id: user.userId })));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSnackBarMessage("We couldn't load the user list");
+        setOpenErrorSnackBar(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [setSnackBarMessage, setOpenErrorSnackBar]);
+
+  const handleDeleteClick = (id) => () => {
+    const target = rows.find((row) => row.id === id);
+    if (!target) return;
+    // Row removal waits on the server, matching the fix applied to products.
+    axios
+      .delete(`${API_BASE}/Users/${target.userId}`, { headers: authHeaders() })
+      .then(() => {
+        setRows((current) => current.filter((row) => row.id !== id));
         setSnackBarMessage("User successfully deleted!");
         setOpenSuccessSnackBar(true);
-        isSuccess = true;
       })
       .catch((error) => {
         setSnackBarMessage(`Error: ${error}`);
         setOpenErrorSnackBar(true);
       });
-
-    return isSuccess;
-  };
-
-  const handleDeleteClick = (id) => () => {
-    const deletedRow = rows.find((row) => row.id === id);
-    const isSuccess = deleteUser(deletedRow.userId);
-    if (isSuccess) {
-      setRows(rows.filter((row) => row.id !== id));
-    }
   };
 
   const columns = [
-    { field: "userId", headerName: "ID", width: 180, editable: false },
-    { field: "username", headerName: "Username", width: 180, editable: false },
-    {
-      field: "firstName",
-      headerName: "First Name",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "lastName",
-      headerName: "Last Name",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "email",
-      headerName: "Email",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "phoneNumber",
-      headerName: "Phone Number",
-      width: 180,
-      editable: false,
-    },
-    {
-      field: "birthDate",
-      headerName: "Birthday",
-      //type: "date",
-      width: 180,
-      editable: false,
-    },
+    { field: "username", headerName: "Username", width: 160 },
+    { field: "firstName", headerName: "First name", width: 150 },
+    { field: "lastName", headerName: "Last name", width: 150 },
+    { field: "email", headerName: "Email", width: 220 },
+    { field: "phoneNumber", headerName: "Phone", width: 150 },
+    { field: "birthDate", headerName: "Birthday", width: 140 },
     {
       field: "role",
       headerName: "Role",
-      width: 100,
-      editable: false,
+      width: 110,
+      renderCell: ({ value }) => (
+        <span
+          className={`status-pill ${
+            value === "Admin" ? "border border-acid text-acid" : "border border-edge text-dim"
+          }`}
+        >
+          {String(value ?? "").toUpperCase()}
+        </span>
+      ),
     },
     {
       field: "actions",
       type: "actions",
       headerName: "Actions",
-      width: 100,
-      cellClassName: "actions",
-      getActions: ({ id }) => {
-        return [
-          <GridActionsCellItem
-            icon={<DeleteIcon />}
-            label="Delete"
-            onClick={handleDeleteClick(id)}
-            color="inherit"
-          />,
-        ];
-      },
+      width: 90,
+      getActions: ({ id }) => [
+        <GridActionsCellItem
+          key="delete"
+          icon={<DeleteIcon />}
+          label="Delete"
+          onClick={handleDeleteClick(id)}
+          sx={{ color: "secondary.main" }}
+        />,
+      ],
     },
   ];
 
-  let usersUrl = `https://game-accessories-api.onrender.com/api/v1/Users`;
-  useEffect(() => {
-    function getUsers() {
-      axios
-        .get(usersUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-        .then((response) => {
-          setRows(
-            response.data.map((user) => ({
-              ...user,
-              id: user.userId,
-            }))
-          );
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-    getUsers();
-  }, [usersUrl, token]);
+  const visibleRows = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((row) =>
+      `${row.username} ${row.firstName} ${row.lastName} ${row.email}`.toLowerCase().includes(term)
+    );
+  }, [rows, query]);
 
   return (
-    <div className="mx-4 my-2">
-      <Box
-        sx={{
-          height: 500,
-          width: "100%",
-          "& .actions": {
-            color: "text.secondary",
-          },
-          "& .textPrimary": {
-            color: "text.primary",
-          },
-        }}
-      >
-        <DataGrid rows={rows} columns={columns} />
+    <div>
+      <AdminTableToolbar query={query} setQuery={setQuery} placeholder={t("admin.searchUsers")} />
+      <Box sx={{ height: 560, width: "100%" }}>
+        <DataGrid rows={visibleRows} columns={columns} disableRowSelectionOnClick />
       </Box>
     </div>
   );

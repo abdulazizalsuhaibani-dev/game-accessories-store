@@ -1,12 +1,12 @@
 import React from "react";
 import WishList from "../components/wishList/WishList";
 
-export default function WishListPage(prop) {
-  const { wishList, wishListCount, cartCount } = prop;
-
+export default function WishListPage({ wishList, setWishList, setWishListCount }) {
   return (
-    <div>
-      <WishList wishList={wishList} />
-    </div>
+    <WishList
+      wishList={wishList}
+      setWishList={setWishList}
+      setWishListCount={setWishListCount}
+    />
   );
 }

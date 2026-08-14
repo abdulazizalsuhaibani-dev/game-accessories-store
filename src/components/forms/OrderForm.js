@@ -1,63 +1,41 @@
 import React from "react";
+import { useStoreSettings } from "../../context/StoreSettings";
 
-export default function OrderForm(prop) {
-  const { orderData, setOrderData } = prop;
+export default function OrderForm({ orderData, setOrderData }) {
+  const { t } = useStoreSettings();
 
   function onChangeHandler(event) {
-    if (event.target.id === "postalCode") {
-      setOrderData({
-        ...orderData,
-        [event.target.id]: Number(event.target.value),
-      });
-    } else {
-      setOrderData({
-        ...orderData,
-        [event.target.id]: event.target.value,
-      });
-    }
+    const { id, value } = event.target;
+    setOrderData({
+      ...orderData,
+      [id]: id === "postalCode" ? Number(value) : value,
+    });
   }
+
+  const fields = [
+    { id: "address", label: t("checkout.street"), type: "text", wide: true },
+    { id: "city", label: t("checkout.city"), type: "text" },
+    { id: "state", label: t("checkout.state"), type: "text" },
+    { id: "postalCode", label: t("checkout.zip"), type: "number" },
+  ];
+
   return (
-    <div className="md:col-span-2">
-      <form>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <input
-              type="text"
-              placeholder="Street address"
-              id="address"
-              onChange={onChangeHandler}
-              className="px-4 py-3 bg-white text-gray-800 w-full text-sm border-2 rounded-md focus:border-pink-500 outline-none"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="City"
-              id="city"
-              onChange={onChangeHandler}
-              className="px-4 py-3 bg-white text-gray-800 w-full text-sm border-2 rounded-md focus:border-pink-500 outline-none"
-            />
-          </div>
-          <div>
-            <input
-              type="text"
-              placeholder="State"
-              id="state"
-              onChange={onChangeHandler}
-              className="px-4 py-3 bg-white text-gray-800 w-full text-sm border-2 rounded-md focus:border-pink-500 outline-none"
-            />
-          </div>
-          <div>
-            <input
-              type="number"
-              placeholder="Zip Code"
-              id="postalCode"
-              onChange={onChangeHandler}
-              className="px-4 py-3 bg-white text-gray-800 w-full text-sm border-2 rounded-md focus:border-pink-500 outline-none"
-            />
-          </div>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {fields.map((field) => (
+        <div key={field.id} className={field.wide ? "sm:col-span-2" : undefined}>
+          <label className="field-label" htmlFor={field.id}>
+            {field.label}
+          </label>
+          <input
+            id={field.id}
+            type={field.type}
+            value={orderData[field.id] || ""}
+            onChange={onChangeHandler}
+            placeholder={field.label}
+            className="field"
+          />
         </div>
-      </form>
+      ))}
     </div>
   );
 }

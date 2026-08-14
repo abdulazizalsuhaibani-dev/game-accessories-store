@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import ProductDetails from "../components/productDetails/ProductDetails";
+import { API_BASE } from "../api";
 
 export default function ProductDetailsPage(prop) {
   const {
@@ -23,7 +24,7 @@ export default function ProductDetailsPage(prop) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const productUrl = `https://game-accessories-api.onrender.com/api/v1/Products/${params.productId}`;
+  const productUrl = `${API_BASE}/Products/${params.productId}`;
   useEffect(() => {
     function getSingleProduct() {
       axios

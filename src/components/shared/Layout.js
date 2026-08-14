@@ -19,7 +19,7 @@ export default function Layout(prop) {
     handleErrorSnackBarClose,
   } = prop;
   return (
-    <div>
+    <div className="flex min-h-screen flex-col bg-void">
       <Header
         wishListCount={wishListCount}
         cartCount={cartCount}
@@ -28,7 +28,9 @@ export default function Layout(prop) {
         userData={userData}
         setUserData={setUserData}
       />
-      <Outlet />
+      <main className="flex-1">
+        <Outlet />
+      </main>
       <Footer />
       <Snackbar
         open={openSuccessSnackBar}
