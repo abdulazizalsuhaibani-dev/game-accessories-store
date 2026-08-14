@@ -3,23 +3,24 @@ import Checkout from "../components/checkout/Checkout";
 
 export default function CheckoutPage(prop) {
   const {
+    userData,
     setSnackBarMessage,
     setOpenSuccessSnackBar,
     setOpenErrorSnackBar,
     cart,
     setCart,
+    setCartCount,
   } = prop;
 
   return (
-    <div>
-      <Checkout
-        userData={prop.userData}
-        setSnackBarMessage={setSnackBarMessage}
-        setOpenSuccessSnackBar={setOpenSuccessSnackBar}
-        setOpenErrorSnackBar={setOpenErrorSnackBar}
-        cart={cart}
-        setCart={setCart}
-      />
-    </div>
+    <Checkout
+      userData={userData}
+      setSnackBarMessage={setSnackBarMessage}
+      setOpenSuccessSnackBar={setOpenSuccessSnackBar}
+      setOpenErrorSnackBar={setOpenErrorSnackBar}
+      cart={cart}
+      setCart={setCart}
+      setCartCount={setCartCount}
+    />
   );
 }

@@ -1,17 +1,18 @@
 import React from "react";
-import Error404 from "../images/404.jpg";
-import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
+import { useStoreSettings } from "../../context/StoreSettings";
 
-export default function Error(prop) {
-  const { errorMessage, errorCode } = prop;
+export default function Error({ errorMessage, errorCode }) {
+  const { t, num } = useStoreSettings();
 
   return (
-    <div className="flex flex-col justify-center items-center my-10">
-      <img className="w-1/6" src={Error404} alt={errorCode} />
-      <p className="text-2xl font-bold my-10">{errorMessage}</p>
-      <Link to="/">
-        <Button variant="contained">Go home</Button>
+    <div className="flex flex-col items-center gap-6 bg-chassis px-6 py-24">
+      <div className="font-display text-[96px] font-bold leading-none text-acid sm:text-[140px]">
+        {num(errorCode ?? 404)}
+      </div>
+      <p className="m-0 max-w-[40ch] text-center text-base text-dim">{errorMessage}</p>
+      <Link to="/" className="h-[50px] btn-acid">
+        {t("error.goHome")}
       </Link>
     </div>
   );

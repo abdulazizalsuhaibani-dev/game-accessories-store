@@ -1,164 +1,134 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import Logo from "../images/logo.png";
+import React, { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import Brand from "../shared/Brand";
+import Ticker from "./Ticker";
+import CurrencyMenu from "./CurrencyMenu";
+import LanguageSwitch from "./LanguageSwitch";
+import { useStoreSettings } from "../../context/StoreSettings";
 
 export default function Header(prop) {
-  const { isAuthenticated, isUserDataLoading, userData, setUserData } = prop;
+  const { isAuthenticated, isUserDataLoading, userData, setUserData, cartCount } = prop;
+  const { t, num } = useStoreSettings();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
 
-  function HandleLogout() {
+  function handleLogout() {
     setUserData(null);
     localStorage.removeItem("token");
+    navigate("/");
   }
 
+  function handleSearch(event) {
+    event.preventDefault();
+    const trimmed = query.trim();
+    navigate(trimmed ? `/products?search=${encodeURIComponent(trimmed)}` : "/products");
+  }
+
+  const isAdmin = isAuthenticated && userData?.role === "Admin";
+
+  const navItems = [
+    { to: "/", label: t("nav.home"), end: true },
+    { to: "/products", label: t("nav.shop"), end: false },
+    { to: "/wishlist", label: t("nav.wishlist"), end: false },
+    ...(isAdmin ? [{ to: "/dashboard", label: t("nav.dashboard"), end: false }] : []),
+  ];
+
+  const navClass = ({ isActive }) =>
+    `telemetry text-xs tracking-badge transition-colors ${
+      isActive ? "text-acid" : "text-dim hover:text-ink"
+    }`;
+
   return (
-    <header className="flex shadow-md py-4 px-4 sm:px-10 bg-white font-[sans-serif] min-h-[70px] tracking-wide relative z-50">
-      <div className="flex flex-wrap items-center justify-between gap-5 w-full">
-        <Link to="/">
-          <img src={Logo} alt="logo" className="w-12" />
-        </Link>
+    <header className="sticky top-0 z-30 bg-chassis">
+      <Ticker />
 
-        <div
-          id="collapseMenu"
-          className="max-lg:hidden lg:!block max-lg:before:fixed max-lg:before:bg-black max-lg:before:opacity-50 max-lg:before:inset-0 max-lg:before:z-50"
-        >
-          <button
-            id="toggleClose"
-            className="lg:hidden fixed top-2 right-4 z-[100] rounded-full bg-white p-3"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-4 fill-black"
-              viewBox="0 0 320.591 320.591"
-            >
-              <path
-                d="M30.391 318.583a30.37 30.37 0 0 1-21.56-7.288c-11.774-11.844-11.774-30.973 0-42.817L266.643 10.665c12.246-11.459 31.462-10.822 42.921 1.424 10.362 11.074 10.966 28.095 1.414 39.875L51.647 311.295a30.366 30.366 0 0 1-21.256 7.288z"
-                data-original="#000000"
-              ></path>
-              <path
-                d="M287.9 318.583a30.37 30.37 0 0 1-21.257-8.806L8.83 51.963C-2.078 39.225-.595 20.055 12.143 9.146c11.369-9.736 28.136-9.736 39.504 0l259.331 257.813c12.243 11.462 12.876 30.679 1.414 42.922-.456.487-.927.958-1.414 1.414a30.368 30.368 0 0 1-23.078 7.288z"
-                data-original="#000000"
-              ></path>
-            </svg>
-          </button>
-
-          <ul className="lg:flex gap-x-5 max-lg:space-y-3 max-lg:fixed max-lg:bg-white max-lg:w-1/2 max-lg:min-w-[300px] max-lg:top-0 max-lg:left-0 max-lg:p-6 max-lg:h-full max-lg:shadow-md max-lg:overflow-auto z-50">
-            <li className="mb-6 hidden max-lg:block">
-              <a href="#/">
-                <img
-                  src="https://readymadeui.com/readymadeui.svg"
-                  alt="logo"
-                  className="w-36"
-                />
-              </a>
-            </li>
-            <li className="max-lg:border-b border-gray-300 max-lg:py-3 px-3">
-              <Link
-                to="/"
-                className="hover:text-[#FF5582] text-[#FF5582] block font-semibold text-[15px]"
-              >
-                Home
-              </Link>
-            </li>
-            <li className="max-lg:border-b border-gray-300 max-lg:py-3 px-3">
-              <Link
-                to="/products"
-                className="hover:text-[#FF5582] text-gray-500 block font-semibold text-[15px]"
-              >
-                Products
-              </Link>
-            </li>
-            <li className="max-lg:border-b border-gray-300 max-lg:py-3 px-3">
-              <Link
-                to="/cart"
-                className="hover:text-[#FF5582] text-gray-500 block font-semibold text-[15px]"
-              >
-                Cart
-              </Link>
-            </li>
-            {isAuthenticated ? (
-              <li className="max-lg:border-b border-gray-300 max-lg:py-3 px-3">
-                <Link
-                  to="/profile"
-                  className="hover:text-[#FF5582] text-gray-500 block font-semibold text-[15px]"
-                >
-                  Profile
-                </Link>
-              </li>
-            ) : (
-              <div></div>
-            )}
-            {isAuthenticated && userData.role === "Admin" ? (
-              <li className="max-lg:border-b border-gray-300 max-lg:py-3 px-3">
-                <Link
-                  to="/dashboard"
-                  className="hover:text-[#FF5582] text-gray-500 block font-semibold text-[15px]"
-                >
-                  Dashboard
-                </Link>
-              </li>
-            ) : (
-              <div></div>
-            )}
-          </ul>
+      <div className="flex h-[66px] items-center justify-between gap-4 border-b border-line bg-panel px-4 sm:px-7">
+        <div className="flex items-center gap-6 lg:gap-9">
+          <Brand />
+          <nav className="hidden items-center gap-6 lg:flex">
+            {navItems.map((item) => (
+              <NavLink key={item.to} to={item.to} end={item.end} className={navClass}>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
         </div>
-        {!isUserDataLoading ? (
-          isAuthenticated ? (
-            <div className="flex max-lg:ml-auto space-x-3">
-              <button
-                className="px-4 py-2 text-sm rounded-full font-bold text-white border-2 border-[#FF5582] bg-[#FF5582] transition-all ease-in-out duration-300 hover:bg-transparent hover:text-[#FF5582]"
-                onClick={() => {
-                  HandleLogout();
-                }}
+
+        <div className="flex items-center gap-2.5">
+          <form
+            onSubmit={handleSearch}
+            className="hidden h-9 min-w-[200px] items-center gap-2 border border-line bg-void px-3 focus-within:border-acid xl:flex"
+          >
+            <span className="font-mono text-[11px] font-semibold text-muted" aria-hidden="true">
+              /
+            </span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("nav.search")}
+              aria-label={t("nav.search")}
+              className="w-full bg-transparent text-xs text-ink outline-none placeholder:text-muted"
+            />
+          </form>
+
+          <CurrencyMenu />
+          <LanguageSwitch />
+
+          <Link
+            to="/cart"
+            className="flex h-9 items-center gap-2 border border-line px-3.5 telemetry text-[11px] tracking-badge text-ink transition-colors hover:border-acid hover:text-acid"
+          >
+            <span className="max-sm:sr-only">{t("nav.cart")}</span>
+            <span className="bg-magenta px-1.5 py-[3px] text-[10px] text-white">
+              {num(String(cartCount ?? 0).padStart(2, "0"))}
+            </span>
+          </Link>
+
+          {/* Below sm the account actions live in the bottom tab bar and on the
+              profile screen, so the header keeps only the store controls. */}
+          {isUserDataLoading ? null : isAuthenticated ? (
+            <div className="hidden items-center gap-2.5 sm:flex">
+              <Link
+                to="/profile"
+                className="flex h-9 items-center border border-line px-3.5 telemetry text-[11px] tracking-badge text-ink transition-colors hover:border-acid hover:text-acid"
               >
-                Sign Out
-              </button>
-              <button id="toggleOpen" className="lg:hidden">
-                <svg
-                  className="w-7 h-7"
-                  fill="#000"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
+                {t("nav.profile")}
+              </Link>
+              <button type="button" onClick={handleLogout} className="h-9 shadow-none btn-acid">
+                {t("nav.signOut")}
               </button>
             </div>
           ) : (
-            <div className="flex max-lg:ml-auto space-x-3">
-              <Link to="/login">
-                <button className="px-4 py-2 text-sm rounded-full font-bold text-white border-2 border-[#FF5582] bg-[#FF5582] transition-all ease-in-out duration-300 hover:bg-transparent hover:text-[#FF5582]">
-                  Login
-                </button>
-              </Link>
-              <Link to="/signUp">
-                <button className="px-4 py-2 text-sm rounded-full font-bold text-white border-2 border-[#FF5582] bg-[#FF5582] transition-all ease-in-out duration-300 hover:bg-transparent hover:text-[#FF5582]">
-                  Sign up
-                </button>
-              </Link>
-              <button id="toggleOpen" className="lg:hidden">
-                <svg
-                  className="w-7 h-7"
-                  fill="#000"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-          )
-        ) : (
-          <div></div>
-        )}
+            <Link to="/login" className="hidden h-9 shadow-none btn-acid sm:inline-flex">
+              {t("nav.signIn")}
+            </Link>
+          )}
+        </div>
       </div>
+
+      {/* Compact tab bar for the mobile layout in screen 06. */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-line bg-panel lg:hidden">
+        {[
+          { to: "/products", label: t("nav.shop"), end: false },
+          { to: "/wishlist", label: t("nav.wishlist"), end: false },
+          { to: "/cart", label: t("nav.cart"), end: false },
+          { to: isAuthenticated ? "/profile" : "/login", label: t("nav.profile"), end: false },
+        ].map((item) => (
+          <NavLink
+            key={item.label}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `py-3 text-center telemetry text-[10px] tracking-badge transition-colors ${
+                isActive ? "text-acid" : "text-dim"
+              }`
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </header>
   );
 }

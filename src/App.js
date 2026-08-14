@@ -1,8 +1,10 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createTheme, ThemeProvider } from "@mui/material";
-import { pink, orange } from "@mui/material/colors";
+import arcadeTheme from "./theme/arcadeTheme";
+import { StoreSettingsProvider, useStoreSettings } from "./context/StoreSettings";
+import { API_BASE } from "./api";
 import HomePage from "./pages/HomePage";
 import ErrorPage from "./pages/ErrorPage";
 import ProductsPage from "./pages/ProductsPage";
@@ -17,16 +19,25 @@ import UserProfilePage from "./pages/UserProfilePage";
 import axios from "axios";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/Layout";
+import DocumentTitle from "./components/shared/DocumentTitle";
 import CheckoutPage from "./pages/CheckoutPage";
 
-const appTheme = createTheme({
-  palette: {
-    primary: pink,
-    secondary: orange,
-  },
-});
-
 function App() {
+  return (
+    <StoreSettingsProvider>
+      <Store />
+    </StoreSettingsProvider>
+  );
+}
+
+function Store() {
+  const { isRTL } = useStoreSettings();
+  // Rebuilt only when the language flips, so MUI's own portals mirror too.
+  const appTheme = useMemo(
+    () => createTheme(arcadeTheme, { direction: isRTL ? "rtl" : "ltr" }),
+    [isRTL]
+  );
+
   function initializeWishlist() {
     const wishList = JSON.parse(localStorage.getItem("wishList"));
     if (wishList == null) localStorage.setItem("wishList", JSON.stringify([]));
@@ -78,7 +89,7 @@ function App() {
     function getUserData() {
       const token = localStorage.getItem("token");
       axios
-        .get("https://game-accessories-api.onrender.com/api/v1/Users/auth", {
+        .get(`${API_BASE}/Users/auth`, {
           headers: {
             Authorization: `Bearer ${token} `,
           },
@@ -101,6 +112,7 @@ function App() {
     <ThemeProvider theme={appTheme}>
       <div className="App">
         <BrowserRouter>
+          <DocumentTitle />
           <Routes>
             <Route
               path="/"
@@ -209,6 +221,7 @@ function App() {
                           setOpenSuccessSnackBar={setOpenSuccessSnackBar}
                           setOpenErrorSnackBar={setOpenErrorSnackBar}
                           setCart={setCart}
+                          setCartCount={setCartCount}
                           cart={cart}
                         />
                       }
@@ -224,7 +237,7 @@ function App() {
                     <ProtectedRoute
                       isUserDataLoading={isUserDataLoading}
                       isAuthenticated={isAuthenticated}
-                      element={<DashboardPage />}
+                      element={<DashboardPage userData={userData} />}
                       userData={userData}
                       shouldCheckAdmin={true}
                     />
@@ -239,6 +252,7 @@ function App() {
                       isAuthenticated={isAuthenticated}
                       element={
                         <EntityPage
+                          userData={userData}
                           setSnackBarMessage={setSnackBarMessage}
                           setOpenSuccessSnackBar={setOpenSuccessSnackBar}
                           setOpenErrorSnackBar={setOpenErrorSnackBar}

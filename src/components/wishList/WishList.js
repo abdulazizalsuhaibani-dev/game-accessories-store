@@ -1,25 +1,46 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import WishListItem from "./WishListItem";
-import { Box } from "@mui/material";
+import { useStoreSettings } from "../../context/StoreSettings";
 
-export default function WishList(prop) {
-  let { wishList } = prop;
-  wishList = JSON.parse(localStorage.getItem("wishList"));
+export default function WishList({ wishList, setWishList, setWishListCount }) {
+  const { t } = useStoreSettings();
 
-  if (wishList === null || wishList === "") {
+  function handleRemove(productId) {
+    const updated = wishList.filter((item) => item.productId !== productId);
+    localStorage.setItem("wishList", JSON.stringify(updated));
+    setWishList(updated);
+    setWishListCount(updated.length);
+  }
+
+  if (!wishList || wishList.length === 0) {
     return (
-      <div>
-        <p>Your wish list is empty!</p>
+      <div className="flex flex-col items-center gap-6 bg-chassis px-6 py-24">
+        <p className="m-0 font-display text-2xl font-bold uppercase text-ink">
+          {t("wishlist.empty")}
+        </p>
+        <Link to="/products" className="h-[50px] btn-acid">
+          {t("cart.keepShopping")}
+        </Link>
       </div>
     );
   }
+
   return (
-    <div className="p-10">
-      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
-        {wishList.map((wishListItem, i) => (
-          <WishListItem wishListItem={wishListItem} key={i} />
+    <div className="bg-chassis">
+      <div className="border-b border-line px-6 py-4 sm:px-7">
+        <h1 className="m-0 telemetry text-xs text-ink">{t("wishlist.title")}</h1>
+      </div>
+
+      <div className="grid gap-4 px-6 py-7 sm:grid-cols-2 sm:px-7 lg:grid-cols-4">
+        {wishList.map((wishListItem) => (
+          <WishListItem
+            key={wishListItem.productId}
+            wishListItem={wishListItem}
+            onRemove={handleRemove}
+          />
         ))}
-      </Box>
+      </div>
     </div>
   );
 }

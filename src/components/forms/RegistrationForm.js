@@ -1,10 +1,14 @@
-import React from "react";
-import Logo from "../images/logo.png";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import axios from "axios";
+import Brand from "../shared/Brand";
+import { API_BASE } from "../../api";
+import { useStoreSettings } from "../../context/StoreSettings";
+
+const EMPTY_GUID = "00000000-0000-0000-0000-000000000000";
 
 const schema = yup
   .object({
@@ -18,7 +22,7 @@ const schema = yup
     phoneNumber: yup
       .string()
       .matches(
-        /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{3,6}$/,
+        /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{3,6}$/,
         "Phone Number must be in valid format!"
       )
       .required("Phone Number is required"),
@@ -37,189 +41,96 @@ const schema = yup
   .required();
 
 export default function RegistrationForm() {
+  const { t } = useStoreSettings();
+  const navigate = useNavigate();
+  const [serverError, setServerError] = useState("");
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(schema),
-  });
+    formState: { errors, isSubmitting },
+  } = useForm({ resolver: yupResolver(schema) });
 
-  const onSubmit = (data) => {
-    data.birthDate = data.birthDate.toISOString().substring(0, 10);
-    data["cartId"] = "00000000-0000-0000-0000-000000000000";
-    delete data.passwordConfirmation;
-    registerUser(data);
-  };
+  function onSubmit(data) {
+    setServerError("");
+    const payload = {
+      ...data,
+      birthDate: data.birthDate.toISOString().substring(0, 10),
+      cartId: EMPTY_GUID,
+    };
+    delete payload.passwordConfirmation;
 
-  const navigate = useNavigate();
-  function registerUser(data) {
-    const url = "https://game-accessories-api.onrender.com/api/v1/Users";
-    axios
-      .post(url, data)
-      .then((response) => {
-        if (response.status === 200) {
-          navigate("/login");
-        }
-      })
+    return axios
+      .post(`${API_BASE}/Users`, payload)
+      .then(() => navigate("/login"))
       .catch((error) => {
-        if (error.status === 400) {
-          alert(error.response.data.message);
-        }
+        setServerError(error.response?.data?.message ?? "We couldn't create your account.");
       });
   }
 
+  const fields = [
+    { id: "username", label: t("auth.username"), type: "text" },
+    { id: "firstName", label: t("profile.firstName"), type: "text" },
+    { id: "lastName", label: t("profile.lastName"), type: "text" },
+    { id: "birthDate", label: t("auth.birthday"), type: "date" },
+    { id: "phoneNumber", label: t("auth.phone"), type: "text" },
+    { id: "email", label: t("auth.email"), type: "text" },
+    { id: "password", label: t("auth.password"), type: "password", hint: t("auth.passwordHint") },
+    { id: "passwordConfirmation", label: t("auth.confirmPassword"), type: "password" },
+  ];
+
   return (
-    <div className="flex flex-col font-[sans-serif] sm:h-screen p-4">
-      <div className="max-w-md w-full mx-auto border border-gray-300 rounded-2xl p-8">
-        <div className="text-center mb-12">
-          <a href="/#">
-            <img src={Logo} alt="logo" className="w-24 inline-block" />
-          </a>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-void px-4 py-10">
+      <div className="w-full max-w-md">
+        <div className="mb-8 flex justify-center">
+          <Brand />
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-6">
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Username
-              </label>
-              <input
-                {...register("username")}
-                id="username"
-                name="username"
-                type="text"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter Username"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.username?.message}</p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                First Name
-              </label>
-              <input
-                {...register("firstName")}
-                id="firstName"
-                type="text"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter First Name"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.firstName?.message}</p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Last Name
-              </label>
-              <input
-                {...register("lastName")}
-                id="lastName"
-                type="text"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter Last Name"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.lastName?.message}</p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Birthday
-              </label>
-              <input
-                {...register("birthDate")}
-                id="birthDate"
-                type="date"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Choose Birthday"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.birthDate?.message}</p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Phone Number
-              </label>
-              <input
-                {...register("phoneNumber")}
-                id="phoneNumber"
-                type="text"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter Phone Number"
-              />
-            </div>
-            <p className="text-sm text-red-600">
-              {errors.phoneNumber?.message}
-            </p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">Email</label>
-              <input
-                {...register("email")}
-                id="email"
-                type="text"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter email"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.email?.message}</p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Password
-              </label>
-              <input
-                {...register("password")}
-                id="password"
-                type="password"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter password"
-              />
-            </div>
-            <p className="text-sm text-red-600">{errors.password?.message}</p>
-            <p className="text-sm mt-5 mb-7">
-              Password should have at least 8 characters and must contains
-              capital and small letters, numbers and symbols.
-            </p>
-            <div>
-              <label className="text-gray-800 text-sm mb-2 block">
-                Confirm Password
-              </label>
-              <input
-                {...register("passwordConfirmation")}
-                type="password"
-                required
-                className="text-gray-800 bg-white border border-gray-300 w-full text-sm px-4 py-3 rounded-md outline-pink-500"
-                placeholder="Enter confirm password"
-              />
-            </div>
-            <p className="text-sm text-red-600">
-              {errors.passwordConfirmation?.message}
-            </p>
-          </div>
+        <div className="panel p-8">
+          <h1 className="m-0 text-center font-display text-2xl font-bold uppercase text-ink">
+            {t("auth.createAccount")}
+          </h1>
 
-          <div className="!mt-12">
-            <button
-              type="submit"
-              className="w-full py-3 px-4 text-sm tracking-wider font-semibold rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none"
-            >
-              Create an account
+          <form onSubmit={handleSubmit(onSubmit)} className="mt-7 flex flex-col gap-4">
+            {fields.map((field) => (
+              <div key={field.id}>
+                <label className="field-label" htmlFor={field.id}>
+                  {field.label}
+                </label>
+                <input
+                  {...register(field.id)}
+                  id={field.id}
+                  type={field.type}
+                  className="field"
+                />
+                {field.hint ? (
+                  <p className="mt-1.5 font-mono text-[11px] text-muted">{field.hint}</p>
+                ) : null}
+                {errors[field.id] ? (
+                  <p className="mt-1.5 font-mono text-[11px] text-magenta">
+                    {errors[field.id].message}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+
+            {serverError ? (
+              <p className="m-0 border border-magenta p-3 font-mono text-[11px] text-magenta">
+                {serverError}
+              </p>
+            ) : null}
+
+            <button type="submit" disabled={isSubmitting} className="mt-2 h-12 btn-acid">
+              {t("auth.createAccount")}
             </button>
-          </div>
-          <p className="text-gray-800 text-sm mt-6 text-center">
-            Already have an account?{" "}
-            <Link to="/login">
-              <a
-                href="/#"
-                className="text-pink-600 font-semibold hover:underline ml-1"
-              >
-                Login here
-              </a>
-            </Link>
-          </p>
-        </form>
+
+            <p className="m-0 mt-3 text-center text-[13px] text-dim">
+              {t("auth.haveAccount")}{" "}
+              <Link to="/login" className="font-semibold">
+                {t("auth.loginHere")}
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

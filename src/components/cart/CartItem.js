@@ -1,132 +1,114 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
+import ImageWell from "../shared/ImageWell";
+import { useStoreSettings } from "../../context/StoreSettings";
 
 export default function CartItem(prop) {
-  const {
-    cartItem,
-    cart,
-    setCart,
-    setTotalPrice,
-    calculateTotalPrice,
-    setSnackBarMessage,
-    setOpenErrorSnackBar,
-  } = prop;
-  const [cartItemQuantity, setCartItemQuantity] = useState(cartItem.quantity);
+  const { cartItem, cart, setCart, setCartCount, setSnackBarMessage, setOpenErrorSnackBar } = prop;
+  const { t, num, price } = useStoreSettings();
 
-  useEffect(() => {
-    setTotalPrice(calculateTotalPrice(cart));
-  }, [cart]);
+  function writeCart(updatedCart) {
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    setCart(updatedCart);
+    setCartCount(updatedCart.length);
+  }
 
-  function handleQuantityIncrement(currProduct) {
-    if (currProduct.sku !== currProduct.quantity) {
-      currProduct.quantity++;
-      setCartItemQuantity(cartItemQuantity + 1);
-      const updatedCart = cart.map((item) =>
-        item.product.productId === currProduct.product.productId
-          ? { ...item, quantity: currProduct.quantity }
+  function setQuantity(next) {
+    writeCart(
+      cart.map((item) =>
+        item.product.productId === cartItem.product.productId
+          ? { ...item, quantity: next }
           : item
-      );
-      setCart(updatedCart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-    } else {
+      )
+    );
+  }
+
+  function handleIncrement() {
+    if (cartItem.quantity >= cartItem.product.sku) {
       setSnackBarMessage("Cannot increase the quantity, SKU is out of stock!");
       setOpenErrorSnackBar(true);
+      return;
     }
+    setQuantity(cartItem.quantity + 1);
   }
 
-  function handleQuantityDecrement(currProduct) {
-    if (cartItemQuantity > 1) {
-      currProduct.quantity--;
-      setCartItemQuantity(cartItemQuantity - 1);
-      const updatedCart = cart.map((item) =>
-        item.product.productId === currProduct.product.productId
-          ? { ...item, quantity: currProduct.quantity }
-          : item
-      );
-      setCart(updatedCart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-    } else {
-      const updatedCart = cart.filter(
-        (item) => item.productId !== currProduct.productId
-      );
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      setCart(updatedCart);
+  function handleDecrement() {
+    if (cartItem.quantity > 1) {
+      setQuantity(cartItem.quantity - 1);
+      return;
     }
+    handleRemove();
   }
+
+  function handleRemove() {
+    writeCart(
+      cart.filter((item) => item.product.productId !== cartItem.product.productId)
+    );
+  }
+
+  const inStock = cartItem.product.sku > 0;
 
   return (
-    <div className="p-6 bg-white shadow-[0_0px_4px_0px_rgba(6,81,237,0.2)] rounded-md relative">
-      <div className="flex items-center max-sm:flex-col gap-4 max-sm:gap-6">
-        <div className="w-52 shrink-0">
-          <img
-            src={cartItem.product.productImage}
-            alt={cartItem.product.productName}
-            className="w-full h-full object-contain"
-          />
+    <div className="flex flex-wrap gap-5 border-b border-line px-6 py-6 sm:px-7">
+      <ImageWell
+        src={cartItem.product.productImage}
+        alt={cartItem.product.productName}
+        className="h-[110px] w-[110px] flex-none"
+      />
+
+      <div className="flex min-w-[200px] flex-1 flex-col gap-2">
+        {cartItem.product.productColor ? (
+          <div className="telemetry text-[10px] font-medium text-muted">
+            {cartItem.product.productColor}
+          </div>
+        ) : null}
+
+        <Link
+          to={`/products/${cartItem.productId}`}
+          className="text-[17px] font-semibold leading-snug text-ink hover:text-acid"
+        >
+          {cartItem.product.productName}
+        </Link>
+
+        <div className={`font-mono text-xs ${inStock ? "text-acid" : "text-magenta"}`}>
+          {inStock ? t("cart.shipsToday") : t("detail.outOfStock")}
         </div>
 
-        <div className="sm:border-l sm:pl-4 sm:border-gray-300 w-full">
-          <Link to={`/products/${cartItem.productId}`}>
-            <h3 className="text-xl font-bold text-gray-800">
-              {cartItem.product.productName}
-            </h3>
-          </Link>
-          <ul className="mt-4 text-sm text-gray-800 space-y-2">
-            <li>{cartItem.product.description}</li>
-          </ul>
+        <div className="mt-1.5 flex gap-4">
+          <button
+            type="button"
+            onClick={handleRemove}
+            className="telemetry text-[10px] tracking-badge text-magenta hover:text-white"
+          >
+            {t("cart.remove")}
+          </button>
+        </div>
+      </div>
 
-          <hr className="border-gray-300 my-6" />
-
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <h4 className="text-sm font-bold text-gray-800">Qty:</h4>
-              <button
-                type="button"
-                className="flex items-center justify-center w-5 h-5 bg-pink-600 outline-none rounded-full"
-                onClick={() => {
-                  handleQuantityDecrement(cartItem);
-                }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-2 fill-white"
-                  viewBox="0 0 124 124"
-                >
-                  <path
-                    d="M112 50H12C5.4 50 0 55.4 0 62s5.4 12 12 12h100c6.6 0 12-5.4 12-12s-5.4-12-12-12z"
-                    data-original="#000000"
-                  ></path>
-                </svg>
-              </button>
-              <span className="font-bold text-sm leading-[16px]">
-                {cartItemQuantity}
-              </span>
-              <button
-                type="button"
-                className="flex items-center justify-center w-5 h-5 bg-pink-600 outline-none rounded-full"
-                onClick={() => {
-                  handleQuantityIncrement(cartItem);
-                }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-2 fill-white"
-                  viewBox="0 0 42 42"
-                >
-                  <path
-                    d="M37.059 16H26V4.941C26 2.224 23.718 0 21 0s-5 2.224-5 4.941V16H4.941C2.224 16 0 18.282 0 21s2.224 5 4.941 5H16v11.059C16 39.776 18.282 42 21 42s5-2.224 5-4.941V26h11.059C39.776 26 42 23.718 42 21s-2.224-5-4.941-5z"
-                    data-original="#000000"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-
-            <div className="flex items-center">
-              <h4 className="text-lg font-bold text-gray-800">
-                ${cartItem.product.productPrice}
-              </h4>
-            </div>
-          </div>
+      <div className="flex flex-col items-end gap-3">
+        <div className="font-display text-xl font-bold text-ink">
+          {price(cartItem.product.productPrice * cartItem.quantity)}
+        </div>
+        <div className="flex h-9 border border-line">
+          <button
+            type="button"
+            onClick={handleDecrement}
+            aria-label="Decrease quantity"
+            className="w-8 text-dim transition-colors hover:text-acid"
+          >
+            −
+          </button>
+          <span className="flex w-9 items-center justify-center border-x border-line font-mono text-[13px] font-semibold text-ink">
+            {num(cartItem.quantity)}
+          </span>
+          <button
+            type="button"
+            onClick={handleIncrement}
+            aria-label="Increase quantity"
+            className="w-8 text-dim transition-colors hover:text-acid"
+          >
+            +
+          </button>
         </div>
       </div>
     </div>
