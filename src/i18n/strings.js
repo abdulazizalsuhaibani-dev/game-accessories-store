@@ -205,6 +205,7 @@ const strings = {
 
     "error.goHome": "Go home",
     "error.notFound": "We couldn't find your page!",
+    "error.pageTitle": "Page not found",
 
     "admin.ops": "OPS",
     "admin.manage": "Manage",
@@ -449,6 +450,7 @@ const strings = {
 
     "error.goHome": "العودة للرئيسية",
     "error.notFound": "تعذّر العثور على الصفحة!",
+    "error.pageTitle": "الصفحة غير موجودة",
 
     "admin.ops": "OPS",
     "admin.manage": "الإدارة",

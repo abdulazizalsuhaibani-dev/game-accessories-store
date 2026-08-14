@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/logo.png" />
+    <!-- SVG first for browsers that take it (stays crisp at any size); the ICO
+         is the fallback and also what browsers request implicitly. -->
+    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/logo-mark.svg" />
+    <link rel="alternate icon" href="%PUBLIC_URL%/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo-mark-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#06070a" />
     <meta
@@ -29,7 +33,9 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Game Accessories Store</title>
+    <!-- Fallback for the first paint and for crawlers; once React mounts,
+         DocumentTitle keeps this in step with the route and the language. -->
+    <title>Game/Acc — Gear that keeps up.</title>
   </head>
   <body style="background: #06070a">
     <noscript>You need to enable JavaScript to run this app.</noscript>

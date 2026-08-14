@@ -19,6 +19,7 @@ import UserProfilePage from "./pages/UserProfilePage";
 import axios from "axios";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import Layout from "./components/shared/Layout";
+import DocumentTitle from "./components/shared/DocumentTitle";
 import CheckoutPage from "./pages/CheckoutPage";
 
 function App() {
@@ -111,6 +112,7 @@ function Store() {
     <ThemeProvider theme={appTheme}>
       <div className="App">
         <BrowserRouter>
+          <DocumentTitle />
           <Routes>
             <Route
               path="/"

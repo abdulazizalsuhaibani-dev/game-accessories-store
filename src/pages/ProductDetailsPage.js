@@ -3,7 +3,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import ProductDetails from "../components/productDetails/ProductDetails";
+import { formatTitle } from "../components/shared/DocumentTitle";
 import { API_BASE } from "../api";
+import { useStoreSettings } from "../context/StoreSettings";
 
 export default function ProductDetailsPage(prop) {
   const {
@@ -20,9 +22,19 @@ export default function ProductDetailsPage(prop) {
     setOpenErrorSnackBar,
   } = prop;
   const params = useParams();
+  const { t } = useStoreSettings();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // DocumentTitle deliberately skips this route, because the tab label is the
+  // product name and that is only known once the fetch resolves.
+  useEffect(() => {
+    if (loading) return;
+    document.title = formatTitle(
+      product ? product.productName : t("error.pageTitle")
+    );
+  }, [loading, product, t]);
 
   const productUrl = `${API_BASE}/Products/${params.productId}`;
   useEffect(() => {
